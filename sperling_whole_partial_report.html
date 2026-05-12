@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Day 3: Sperling 整体报告与局部报告记忆实验</title>
+
+    <script src="https://unpkg.com/jspsych@7.3.4"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-instructions@1.1.4"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
+    <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css">
+
+    <style>
+        :root {
+            --bg: #111827;
+            --panel: #f8fafc;
+            --text: #111827;
+            --muted: #475569;
+            --line: #cbd5e1;
+            --accent: #0f766e;
+            --accent-strong: #115e59;
+            --warn: #b45309;
+            --stimulus-letter-font-size: 12pt;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", Arial, sans-serif;
+        }
+
+        .jspsych-display-element {
+            background: var(--bg);
+        }
+
+        .jspsych-content-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .jspsych-content {
+            width: min(920px, 100%);
+        }
+
+        .lab-panel {
+            width: min(920px, 100%);
+            margin: 0 auto;
+            padding: 30px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+            text-align: left;
+        }
+
+        .lab-panel h1,
+        .lab-panel h2 {
+            margin: 0 0 18px;
+            color: var(--accent-strong);
+            line-height: 1.25;
+        }
+
+        .lab-panel p,
+        .lab-panel li {
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.75;
+        }
+
+        .lab-panel strong {
+            color: var(--text);
+        }
+
+        .tone-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 18px 0 6px;
+        }
+
+        .tone-button,
+        .action-button,
+        .jspsych-btn {
+            appearance: none;
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 700;
+            padding: 12px 18px;
+        }
+
+        .tone-button {
+            background: white;
+            color: var(--accent-strong);
+        }
+
+        .tone-button:focus-visible,
+        .action-button:focus-visible,
+        .jspsych-btn:focus-visible {
+            outline: 3px solid rgba(15, 118, 110, 0.35);
+            outline-offset: 3px;
+        }
+
+        .key {
+            display: inline-block;
+            min-width: 36px;
+            padding: 2px 9px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: #e2e8f0;
+            color: var(--text);
+            font-family: Consolas, "Courier New", monospace;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .fixation {
+            color: white;
+            font-size: 64px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stimulus-wrap {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: grid;
+            place-items: center;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        .memory-matrix {
+            display: grid;
+            grid-template-rows: repeat(3, auto);
+            gap: 14px;
+        }
+
+        .matrix-row {
+            display: grid;
+            grid-template-columns: repeat(4, 24px);
+            gap: 18px;
+        }
+
+        .symbol-cell {
+            display: grid;
+            place-items: center;
+            width: 24px;
+            height: 18px;
+            background: transparent;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: var(--stimulus-letter-font-size);
+            font-weight: 400;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        .cue {
+            display: grid;
+            place-items: center;
+            min-height: 360px;
+            color: white;
+            text-align: center;
+        }
+
+        .cue-symbol {
+            font-size: clamp(68px, 12vw, 120px);
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .cue-text {
+            margin-top: 16px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .response-panel {
+            width: min(820px, 100%);
+            margin: 0 auto;
+            padding: 28px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .response-panel h2 {
+            margin: 0 0 10px;
+            color: var(--accent-strong);
+        }
+
+        .response-panel p {
+            margin: 8px 0;
+            color: var(--muted);
+            font-size: 17px;
+            line-height: 1.65;
+        }
+
+        .jspsych-survey-text-question textarea,
+        .jspsych-survey-text-question input[type="text"] {
+            width: 100%;
+            min-height: 92px;
+            border: 1px solid #94a3b8;
+            border-radius: 8px;
+            color: var(--text);
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0;
+            padding: 14px 16px;
+            text-transform: uppercase;
+        }
+
+        .jspsych-survey-text-question p {
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .progress {
+            color: #cbd5e1;
+            font-size: 16px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .result-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0 22px;
+            font-size: 16px;
+        }
+
+        .result-grid th,
+        .result-grid td {
+            border: 1px solid var(--line);
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .result-grid th {
+            background: #e2e8f0;
+            color: var(--text);
+        }
+
+        .note {
+            border-left: 4px solid var(--warn);
+            padding-left: 12px;
+            color: var(--muted);
+        }
+
+        @media (max-width: 640px) {
+
+            .lab-panel,
+            .response-panel {
+                padding: 22px;
+            }
+
+            .tone-row {
+                grid-template-columns: 1fr;
+            }
+
+            .memory-matrix {
+                gap: 12px;
+            }
+
+            .matrix-row {
+                gap: 12px;
+            }
+        }
+
+        /* 响应输入网格样式 */
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 15px;
+            margin: 30px auto;
+            justify-content: center;
+        }
+
+        .input-box {
+            width: 60px;
+            height: 60px;
+            font-size: 28px;
+            text-align: center;
+            text-transform: uppercase;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            color: #1e293b;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .input-box:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+            outline: none;
+        }
+
+        .input-box.disabled {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+            color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .input-box.highlight {
+            border-color: var(--accent);
+            background: #f0fdfa;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        const EXPERIMENT = {
+            stimulusDurationMs: 50,
+            cueDurationMs: 650,
+            practiceRepetitions: 2,
+            trialsPerCondition: 12,
+            rows: 3,
+            cols: 4,
+            letters: "BCDFGHJKLMNPQRSTVWXYZ".split(""),
+            cueLabels: ["上行", "中行", "下行"],
+            cueSymbols: ["↑", "→", "↓"],
+            cueFrequencies: [1200, 650, 300],
+            conditions: [
+                { id: "whole", label: "整体报告", reportType: "whole", cueDelayMs: null },
+                { id: "partial_0", label: "局部报告：即时提示", reportType: "partial", cueDelayMs: 0 },
+                { id: "partial_300", label: "局部报告：提示延迟 300ms", reportType: "partial", cueDelayMs: 300 },
+                { id: "partial_1000", label: "局部报告：提示延迟 1000ms", reportType: "partial", cueDelayMs: 1000 }
+            ]
+        };
+
+        let audioContext = null;
+
+        function getAudioContext() {
+            if (!audioContext) {
+                const AudioCtor = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioCtor();
+            }
+            if (audioContext.state === "suspended") {
+                audioContext.resume();
+            }
+            return audioContext;
+        }
+
+        function playCueTone(rowIndex) {
+            const ctx = getAudioContext();
+            const now = ctx.currentTime;
+            const oscillator = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            oscillator.type = "sine";
+            oscillator.frequency.setValueAtTime(EXPERIMENT.cueFrequencies[rowIndex], now);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.48); // 调整淡出结束时间
+            oscillator.connect(gain);
+            gain.connect(ctx.destination);
+            oscillator.start(now);
+            oscillator.stop(now + 0.5); // 停止时间改为 0.5s
+        }
+
+        window.playCueTone = playCueTone;
+
+        function shuffle(array) {
+            const copy = array.slice();
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function takeRandom(pool, count) {
+            const selected = [];
+            for (let i = 0; i < count; i++) {
+                const index = Math.floor(Math.random() * pool.length);
+                selected.push(pool.splice(index, 1)[0]);
+            }
+            return selected;
+        }
+
+        function makeGrid() {
+            const letters = shuffle(EXPERIMENT.letters);
+            const grid = [];
+
+            for (let row = 0; row < EXPERIMENT.rows; row++) {
+                const rowSymbols = takeRandom(letters, EXPERIMENT.cols);
+                grid.push(shuffle(rowSymbols));
+            }
+
+            return grid;
+        }
+
+        function flattenGrid(grid) {
+            return grid.reduce((all, row) => all.concat(row), []);
+        }
+
+        function buildTrials(phase) {
+            const trials = [];
+            const repetitions = phase === "practice" ? EXPERIMENT.practiceRepetitions : EXPERIMENT.trialsPerCondition;
+            const conditionSet = phase === "practice"
+                ? [
+                    { id: "whole_practice", label: "练习：整体报告", reportType: "whole", cueDelayMs: null },
+                    { id: "partial_practice_top", label: "练习：局部报告上行", reportType: "partial", cueDelayMs: 0, fixedRow: 0 },
+                    { id: "partial_practice_middle", label: "练习：局部报告中行", reportType: "partial", cueDelayMs: 0, fixedRow: 1 },
+                    { id: "partial_practice_bottom", label: "练习：局部报告下行", reportType: "partial", cueDelayMs: 0, fixedRow: 2 }
+                ]
+                : EXPERIMENT.conditions;
+
+            conditionSet.forEach((condition) => {
+                for (let i = 0; i < repetitions; i++) {
+                    const grid = makeGrid();
+                    const cueRow = condition.reportType === "partial"
+                        ? (typeof condition.fixedRow === "number" ? condition.fixedRow : i % EXPERIMENT.rows)
+                        : null;
+                    const target = condition.reportType === "partial" ? grid[cueRow] : flattenGrid(grid);
+
+                    trials.push({
+                        phase,
+                        condition: condition.id,
+                        condition_label: condition.label,
+                        report_type: condition.reportType,
+                        cue_delay_ms: condition.cueDelayMs,
+                        cued_row: cueRow,
+                        cued_row_label: cueRow === null ? "全部" : EXPERIMENT.cueLabels[cueRow],
+                        grid,
+                        grid_json: JSON.stringify(grid),
+                        target,
+                        target_json: JSON.stringify(target)
+                    });
+                }
+            });
+
+            return shuffle(trials);
+        }
+
+        function renderMatrix(grid) {
+            const rows = grid.map((row) => {
+                const cells = row.map((symbol) => `<div class="symbol-cell">${symbol}</div>`).join("");
+                return `<div class="matrix-row">${cells}</div>`;
+            }).join("");
+
+            return `<div class="stimulus-wrap"><div class="memory-matrix">${rows}</div></div>`;
+        }
+
+        function normalizeResponse(raw) {
+            return String(raw || "")
+                .toUpperCase()
+                .replace(/[^A-Z0-9]/g, "")
+                .split("");
+        }
+
+        function scoreResponse(responseSymbols, targetSymbols) {
+            let correct = 0;
+            for (let i = 0; i < targetSymbols.length; i++) {
+                if (responseSymbols[i] === targetSymbols[i]) {
+                    correct++;
+                }
+            }
+            return correct;
+        }
+
+        function percent(value) {
+            if (!Number.isFinite(value)) {
+                return "0%";
+            }
+            return `${Math.round(value * 100)}%`;
+        }
+
+        function mean(values) {
+            if (values.length === 0) {
+                return 0;
+            }
+            return values.reduce((sum, value) => sum + value, 0) / values.length;
+        }
+
+        function buildSummaryTable(trials) {
+            const order = ["whole", "partial_0", "partial_300", "partial_1000"];
+            const rows = order.map((conditionId) => {
+                const subset = trials.filter((trial) => trial.condition === conditionId);
+                if (subset.length === 0) {
+                    return "";
+                }
+                const label = subset[0].condition_label;
+                const accuracy = mean(subset.map((trial) => trial.proportion_correct));
+                const correct = mean(subset.map((trial) => trial.correct_count));
+                const available = mean(subset.map((trial) => trial.estimated_available_symbols));
+
+                return `
+                    <tr>
+                        <td>${label}</td>
+                        <td>${subset.length}</td>
+                        <td>${correct.toFixed(2)}</td>
+                        <td>${percent(accuracy)}</td>
+                        <td>${available.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join("");
+
+            return `
+                <table class="result-grid">
+                    <thead>
+                        <tr>
+                            <th>条件</th>
+                            <th>有效试次</th>
+                            <th>平均位置正确数</th>
+                            <th>平均正确率</th>
+                            <th>估计可获得字母数</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+        }
+
+        const jsPsych = initJsPsych({
+            on_finish: function () {
+                const mainTrials = jsPsych.data.get()
+                    .filter({ task: "memory_response", phase: "main" })
+                    .values();
+
+                jsPsych.data.get().localSave("csv", "sperling_whole_partial_report_data.csv");
+
+                document.body.innerHTML = `
+                    <div class="jspsych-content-wrapper">
+                        <div class="lab-panel">
+                            <h1>实验完成</h1>
+                            <p>数据已尝试保存为 <strong>sperling_whole_partial_report_data.csv</strong>。下表只汇总主实验试次，练习试次不会计入结果。</p>
+                            ${buildSummaryTable(mainTrials)}
+                            <p class="note">局部报告的“估计可获得字母数”按论文思路计算：被提示行正确率 × 全矩阵 12 个字母。即时提示通常会高于整体报告，提示延迟越长通常越接近整体报告水平。</p>
+                            <button class="action-button" onclick="downloadSperlingData()">重新下载数据</button>
+                            <button class="tone-button" onclick="location.reload()">再做一次</button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        window.downloadSperlingData = function () {
+            jsPsych.data.get().localSave("csv", "sperling_whole_partial_report_data.csv");
+        };
+
+        const intro = {
+            type: jsPsychInstructions,
+            pages: [
+                `<div class="lab-panel">
+                    <h1>整体报告与局部报告记忆实验</h1>
+                    <p>本实验重现 Sperling 经典视觉感觉记忆研究的核心逻辑。每个试次会短暂呈现一个 <strong>3 行 × 4 列</strong> 的字母矩阵。</p>
+                    <p>每个试次中，先按 <span class="key">空格</span> 显示注视点“+”，看到“+”后再次按 <span class="key">空格</span> 才会出现需要记忆的字母。</p>
+                    <p>你的任务是在刺激消失后尽可能准确地报告看到的字母。请把字母按位置顺序输入；不确定时也请猜测。</p>
+                </div>`,
+                `<div class="lab-panel">
+                    <h2>两类报告方式</h2>
+                    <ul>
+                        <li><strong>整体报告：</strong>按对应位置输入全部 12 个字母。</li>
+                        <li><strong>局部报告：</strong>刺激消失后会出现提示音和方向提示，只输入被提示的那一行 4 个字母。</li>
+                    </ul>
+                    <p>局部报告会包含即时提示、延迟 300ms 提示、延迟 1000ms 提示。比较这些条件，可以看到短暂视觉信息随时间衰退。</p>
+                </div>`,
+                `<div class="lab-panel">
+                    <h2>提示音对应关系</h2>
+                    <p><strong>高音 = 上行</strong>，<strong>中音 = 中行</strong>，<strong>低音 = 下行</strong>。你可以先试听提示音。</p>
+                    <div class="tone-row">
+                        <button class="tone-button" type="button" onclick="playCueTone(0)">试听上行高音</button>
+                        <button class="tone-button" type="button" onclick="playCueTone(1)">试听中行中音</button>
+                        <button class="tone-button" type="button" onclick="playCueTone(2)">试听下行低音</button>
+                    </div>
+                    <p>准备好后点击“下一页”。先有 8 个练习试次，然后进入正式实验。</p>
+                </div>`
+            ],
+            show_clickable_nav: true,
+            button_label_next: "下一页",
+            button_label_previous: "上一页"
+        };
+
+        const practiceStart = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="lab-panel">
+                    <h2>练习开始</h2>
+                    <p>接下来有 8 个练习试次。每次先按空格显示中央注视点“+”，再按空格观看 50ms 的字母矩阵。</p>
+                    <p>请按 <span class="key">空格</span> 进入第一个练习试次的注视点。</p>
+                </div>
+            `,
+            choices: [" "]
+        };
+
+        const testStart = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="lab-panel">
+                    <h2>正式实验开始</h2>
+                    <p>练习结束。正式实验共 ${EXPERIMENT.conditions.length * EXPERIMENT.trialsPerCondition} 个试次，系统会自动保存每个试次的数据。</p>
+                    <p>请按 <span class="key">空格</span> 进入第一个正式试次的注视点。</p>
+                </div>
+            `,
+            choices: [" "]
+        };
+
+        const fixation = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: '<div class="fixation">+</div>',
+            choices: [" "],
+            data: { task: "fixation" }
+        };
+
+        const stimulus = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function () {
+                return renderMatrix(jsPsych.timelineVariable("grid"));
+            },
+            choices: "NO_KEYS",
+            trial_duration: EXPERIMENT.stimulusDurationMs,
+            data: {
+                task: "stimulus",
+                phase: jsPsych.timelineVariable("phase"),
+                condition: jsPsych.timelineVariable("condition")
+            }
+        };
+
+        const cueDelay = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: "",
+            choices: "NO_KEYS",
+            trial_duration: function () {
+                const delay = jsPsych.timelineVariable("cue_delay_ms");
+                return jsPsych.timelineVariable("report_type") === "partial" && delay > 0 ? delay : 1;
+            },
+            data: {
+                task: "cue_delay",
+                phase: jsPsych.timelineVariable("phase"),
+                condition: jsPsych.timelineVariable("condition")
+            }
+        };
+
+        const cue = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function () {
+                const row = jsPsych.timelineVariable("cued_row");
+                if (row === null) {
+                    return "";
+                }
+
+                return `
+                    <div class="cue">
+                        <div>
+                            <div class="cue-symbol">${EXPERIMENT.cueSymbols[row]}</div>
+                            <div class="cue-text">请报告${EXPERIMENT.cueLabels[row]}</div>
+                        </div>
+                    </div>
+                `;
+            },
+            choices: "NO_KEYS",
+            trial_duration: function () {
+                return jsPsych.timelineVariable("report_type") === "partial" ? EXPERIMENT.cueDurationMs : 1;
+            },
+            on_start: function () {
+                if (jsPsych.timelineVariable("report_type") === "partial") {
+                    playCueTone(jsPsych.timelineVariable("cued_row"));
+                }
+            },
+            data: {
+                task: "cue",
+                phase: jsPsych.timelineVariable("phase"),
+                condition: jsPsych.timelineVariable("condition"),
+                cued_row: jsPsych.timelineVariable("cued_row")
+            }
+        };
+
+        const response = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function () {
+                const reportType = jsPsych.timelineVariable("report_type");
+                const cuedRow = jsPsych.timelineVariable("cued_row");
+                const title = reportType === "whole"
+                    ? "整体报告：请填写全部 12 个字母"
+                    : `局部报告：请填写${jsPsych.timelineVariable("cued_row_label")}的 4 个字母`;
+
+                let gridHtml = '<div class="input-grid">';
+                for (let r = 0; r < 3; r++) {
+                    for (let c = 0; c < 4; c++) {
+                        const isDisabled = (reportType === "partial" && r !== cuedRow);
+                        const isHighlighted = (reportType === "partial" && r === cuedRow);
+                        gridHtml += `
+                            <input type="text" 
+                                class="input-box ${isDisabled ? 'disabled' : ''} ${isHighlighted ? 'highlight' : ''}" 
+                                id="r${r}c${c}" 
+                                maxlength="1" 
+                                autocomplete="off"
+                                ${isDisabled ? 'disabled' : ''}>
+                        `;
+                    }
+                }
+                gridHtml += '</div>';
+
+                return `
+                    <div class="response-panel" style="text-align: center;">
+                        <h2>${title}</h2>
+                        <p>请在下方网格中输入你看到的字母（不区分大小写）。</p>
+                        ${gridHtml}
+                        <button id="submit-response-btn" type="button" class="jspsych-btn" style="margin-top: 20px;">提交回答</button>
+                    </div>
+                `;
+            },
+            choices: "NO_KEYS",
+            on_load: function () {
+                const inputs = Array.from(document.querySelectorAll('.input-box:not(.disabled)'));
+                const reportType = jsPsych.timelineVariable("report_type");
+                const cuedRow = jsPsych.timelineVariable("cued_row");
+                let submitted = false;
+
+                function submitResponse() {
+                    if (submitted) {
+                        return;
+                    }
+                    submitted = true;
+
+                    let responseSymbols = [];
+                    let rawResponse = "";
+
+                    if (reportType === "whole") {
+                        for (let r = 0; r < 3; r++) {
+                            for (let c = 0; c < 4; c++) {
+                                const val = document.getElementById(`r${r}c${c}`).value || " ";
+                                rawResponse += val;
+                                responseSymbols.push(val.toUpperCase().trim() || "");
+                            }
+                        }
+                    } else {
+                        for (let c = 0; c < 4; c++) {
+                            const val = document.getElementById(`r${cuedRow}c${c}`).value || " ";
+                            rawResponse += val;
+                            responseSymbols.push(val.toUpperCase().trim() || "");
+                        }
+                    }
+
+                    jsPsych.finishTrial({
+                        captured_symbols: responseSymbols,
+                        captured_raw: rawResponse
+                    });
+                }
+
+                if (inputs.length > 0) {
+                    inputs[0].focus();
+                }
+
+                // 自动跳格逻辑
+                inputs.forEach((input, index) => {
+                    input.addEventListener('input', (e) => {
+                        if (input.value.length === 1 && index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        }
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            submitResponse();
+                            return;
+                        }
+
+                        if (e.key === 'Backspace' && input.value.length === 0 && index > 0) {
+                            inputs[index - 1].focus();
+                        }
+                    });
+                });
+
+                document.getElementById('submit-response-btn').addEventListener('click', submitResponse);
+            },
+            data: {
+                task: "memory_response",
+                phase: jsPsych.timelineVariable("phase"),
+                condition: jsPsych.timelineVariable("condition"),
+                condition_label: jsPsych.timelineVariable("condition_label"),
+                report_type: jsPsych.timelineVariable("report_type"),
+                cue_delay_ms: jsPsych.timelineVariable("cue_delay_ms"),
+                cued_row: jsPsych.timelineVariable("cued_row"),
+                cued_row_label: jsPsych.timelineVariable("cued_row_label"),
+                grid_json: jsPsych.timelineVariable("grid_json"),
+                target_json: jsPsych.timelineVariable("target_json")
+            },
+            on_finish: function (data) {
+                const responseSymbols = data.captured_symbols || [];
+                const rawResponse = data.captured_raw || "";
+                const targetSymbols = JSON.parse(data.target_json);
+                const correctCount = scoreResponse(responseSymbols, targetSymbols);
+                const totalSymbols = EXPERIMENT.rows * EXPERIMENT.cols;
+                const accuracy = correctCount / targetSymbols.length;
+
+                data.raw_report = rawResponse;
+                data.normalized_report = responseSymbols.join("");
+                data.target = targetSymbols.join("");
+                data.correct_count = correctCount;
+                data.target_length = targetSymbols.length;
+                data.accuracy = accuracy;
+                data.proportion_correct = accuracy;
+
+                data.estimated_available_symbols = data.report_type === "partial"
+                    ? accuracy * totalSymbols
+                    : correctCount;
+            }
+        };
+
+        const feedback = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function () {
+                if (jsPsych.timelineVariable("phase") !== "practice") {
+                    return "";
+                }
+
+                const lastTrial = jsPsych.data.get().filter({ task: "memory_response" }).last(1).values()[0];
+                return `
+                    <div class="lab-panel">
+                        <h2>练习反馈</h2>
+                        <p>目标答案：<strong>${lastTrial.target}</strong></p>
+                        <p>你的输入：<strong>${lastTrial.normalized_report || "空"}</strong></p>
+                        <p>位置正确数：<strong>${lastTrial.correct_count} / ${lastTrial.target_length}</strong></p>
+                        <p>请按 <span class="key">空格</span> 进入下一个试次的注视点。</p>
+                    </div>
+                `;
+            },
+            choices: function () {
+                return jsPsych.timelineVariable("phase") === "practice" ? [" "] : "NO_KEYS";
+            },
+            trial_duration: function () {
+                return jsPsych.timelineVariable("phase") === "practice" ? null : 1;
+            }
+        };
+
+        const progress = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function () {
+                if (jsPsych.timelineVariable("phase") !== "main") {
+                    return "";
+                }
+
+                const mainResponses = jsPsych.data.get()
+                    .filter({ task: "memory_response", phase: "main" })
+                    .count();
+                const total = EXPERIMENT.conditions.length * EXPERIMENT.trialsPerCondition;
+                return `
+                    <div class="lab-panel" style="text-align: center;">
+                        <h2>正式实验进度：${mainResponses} / ${total}</h2>
+                        <p>请按 <span class="key">空格</span> 进入下一个试次的注视点。</p>
+                    </div>
+                `;
+            },
+            choices: function () {
+                return jsPsych.timelineVariable("phase") === "main" ? [" "] : "NO_KEYS";
+            },
+            trial_duration: function () {
+                return jsPsych.timelineVariable("phase") === "main" ? null : 1;
+            }
+        };
+
+        const trialProcedure = {
+            timeline: [fixation, stimulus, cueDelay, cue, response, feedback, progress],
+            timeline_variables: []
+        };
+
+        const practiceProcedure = {
+            ...trialProcedure,
+            timeline_variables: buildTrials("practice")
+        };
+
+        const mainProcedure = {
+            ...trialProcedure,
+            timeline_variables: buildTrials("main")
+        };
+
+        jsPsych.run([intro, practiceStart, practiceProcedure, testStart, mainProcedure]);
+    </script>
+</body>
+
+</html>
