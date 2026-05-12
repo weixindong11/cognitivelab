@@ -1,6 +1,8 @@
 # 普通心理学实验
 采用jsPsych实现教材中的经典实验，不求完全复现研究内容，只用于日常教学演示。（代码借助AI编写）
 ## 1. Sperling （1960）局部报告法与整体报告法
+（1）sperling_whole_partial_report.html
+（2）sperling_whole_partial_report_original_letter_size.html
 只报告原文的3×4网格字母，其中局部报告法条件下还包括延迟回忆。共8次练习，48次正式实验。两份文件中只有字母大小不同。
 
 ### 参考文献
